@@ -36,15 +36,22 @@ spring:
     multipart:
       # 大小限制
       max-file-size: 10MB
+
+  cloud:
+    nacos:
+      discovery:
+        server-addr: 127.0.0.1:8848
+
 server:
   address: 0.0.0.0
   port: 8102
   servlet:
-    context-path: /api
+    context-path: /api/user
     # cookie 30 天过期
     session:
       cookie:
         max-age: 2592000
+        path: /api
 mybatis-plus:
   configuration:
     map-underscore-to-camel-case: false
@@ -64,3 +71,5 @@ logging:
     #分包配置级别，即不同的目录下可以使用不同的级别
     top.yalexin.top.yalexin.ojbackenduserservice: debug
 
+knife4j:
+  enable: true

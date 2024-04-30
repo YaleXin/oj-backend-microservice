@@ -12,11 +12,6 @@ import java.util.List;
 @NoArgsConstructor
 @AllArgsConstructor
 public class ExecuteCodeResponse {
-    private List<String> outputList;
-
-    private String executeMessage;
-
-    private Integer executeStatus;
-
-    private JudgeInfo judgeInfo;
+    // 长度和输入长度一致，即每个输入对应有一个ExecuteMessage
+    private List<ExecuteMessage> executeMessages;
 }

@@ -25,14 +25,12 @@ public class ExampleCodesandbox implements CodeSandbox {
 
 
         ExecuteCodeResponse executeCodeResponse = new ExecuteCodeResponse();
-        executeCodeResponse.setExecuteStatus(QuestionSubmitStatusEnum.SUCCESS.getValue());
-        executeCodeResponse.setExecuteMessage(QuestionSubmitStatusEnum.SUCCESS.getText());
+
         JudgeInfo judgeInfo = new JudgeInfo();
         judgeInfo.setMemoryCost(100L);
         judgeInfo.setTimeCost(100L);
         judgeInfo.setMessage("AC");
-        executeCodeResponse.setJudgeInfo(judgeInfo);
-        executeCodeResponse.setOutputList(inputList);
+
         return executeCodeResponse;
     }
 }

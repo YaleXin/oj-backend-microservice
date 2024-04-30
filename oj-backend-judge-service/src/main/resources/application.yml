@@ -36,15 +36,27 @@ spring:
     multipart:
       # 大小限制
       max-file-size: 10MB
+
+  cloud:
+    nacos:
+      discovery:
+        server-addr: 127.0.0.1:8848
+
+  rabbitmq:
+    host: 172.22.108.1
+    port: 5672
+    username: guest
+    password: guest
 server:
   address: 0.0.0.0
   port: 8104
   servlet:
-    context-path: /api
+    context-path: /api/judge
     # cookie 30 天过期
     session:
       cookie:
         max-age: 2592000
+        path: /api
 mybatis-plus:
   configuration:
     map-underscore-to-camel-case: false
@@ -63,4 +75,14 @@ logging:
     root: info
     #分包配置级别，即不同的目录下可以使用不同的级别
     top.yalexin.top.yalexin.ojbackenduserservice: debug
+
+code-sandbox:
+  type: remote
+
+knife4j:
+  enable: true
+
+message-queue:
+  exchange: code_exchange
+  routingKey: my_routingkey
 

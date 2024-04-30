@@ -22,14 +22,14 @@ import top.yalexin.backendmodel.model.enums.QuestionSubmitLanguageEnum;
 import top.yalexin.backendmodel.model.enums.QuestionSubmitStatusEnum;
 import top.yalexin.backendmodel.model.vo.QuestionSubmitVO;
 import top.yalexin.ojbackendquestionservice.mapper.QuestionSubmitMapper;
+import top.yalexin.ojbackendquestionservice.message.JudgeMessageProducer;
 import top.yalexin.ojbackendquestionservice.service.QuestionService;
 import top.yalexin.ojbackendquestionservice.service.QuestionSubmitService;
-import top.yalexin.ojbackendserviceclient.service.JudgeService;
-import top.yalexin.ojbackendserviceclient.service.UserService;
+import top.yalexin.ojbackendserviceclient.service.JudgeFeignClient;
+import top.yalexin.ojbackendserviceclient.service.UserFeignClient;
 
 import javax.annotation.Resource;
 import java.util.List;
-import java.util.concurrent.CompletableFuture;
 import java.util.stream.Collectors;
 
 /**
@@ -44,12 +44,15 @@ public class QuestionSubmitServiceImpl extends ServiceImpl<QuestionSubmitMapper,
     private QuestionService questionService;
 
     @Resource
-    private UserService userService;
+    private UserFeignClient userFeignClient;
+
+    @Resource
+    private JudgeMessageProducer myRabbitMqMessageProducer;
 
     @Resource
     //     @Lazy 避免循环依赖
     @Lazy
-    private JudgeService judgeService;
+    private JudgeFeignClient judgeFeignClient;
 
     /**
      * 提交代码
@@ -87,10 +90,14 @@ public class QuestionSubmitServiceImpl extends ServiceImpl<QuestionSubmitMapper,
             throw new BusinessException(ErrorCode.SYSTEM_ERROR, "用户提交代码插入失败");
         }
         Long submitId = questionSubmit.getId();
+
+        // 写入消息队列
+        myRabbitMqMessageProducer.sendMessage(String.valueOf(submitId));
+
         //  调用判题服务（异步）
-        CompletableFuture.runAsync(() ->{
-            judgeService.doJudge(submitId);
-        });
+//        CompletableFuture.runAsync(() ->{
+//            judgeFeignClient.doJudge(submitId);
+//        });
 
         return submitId;
     }
@@ -141,7 +148,7 @@ public class QuestionSubmitServiceImpl extends ServiceImpl<QuestionSubmitMapper,
         // 只有自己或者管理员能查看自己提交的 code ，自己能看到别人的评测信息有限
         long questionSubmitUserId = questionSubmit.getUserId();
         // 如果评测记录不是当前登录用户提交的，或者当前用户不是管理者，则代码设置为空
-        if (loginUser.getId() != questionSubmitUserId && !userService.isAdmin(loginUser)) {
+        if (loginUser.getId() != questionSubmitUserId && !userFeignClient.isAdmin(loginUser)) {
             questionSubmitVO.setCode(null);
         }
         return questionSubmitVO;

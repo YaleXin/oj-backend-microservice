@@ -1,5 +1,6 @@
 package top.yalexin.ojbackendquestionservice.controller;
 
+import com.baomidou.mybatisplus.core.conditions.query.QueryWrapper;
 import com.baomidou.mybatisplus.extension.plugins.pagination.Page;
 import com.google.gson.Gson;
 import lombok.extern.slf4j.Slf4j;
@@ -23,7 +24,7 @@ import top.yalexin.backendmodel.model.vo.QuestionSubmitVO;
 import top.yalexin.backendmodel.model.vo.QuestionVO;
 import top.yalexin.ojbackendquestionservice.service.QuestionService;
 import top.yalexin.ojbackendquestionservice.service.QuestionSubmitService;
-import top.yalexin.ojbackendserviceclient.service.UserService;
+import top.yalexin.ojbackendserviceclient.service.UserFeignClient;
 
 
 import javax.annotation.Resource;
@@ -34,7 +35,7 @@ import java.util.List;
  * 问题接口
  */
 @RestController
-@RequestMapping("/question")
+@RequestMapping("/")
 @Slf4j
 public class QuestionController {
 
@@ -42,7 +43,7 @@ public class QuestionController {
     private QuestionService questionService;
 
     @Resource
-    private UserService userService;
+    private UserFeignClient userFeignClient;
 
     private final static Gson GSON = new Gson();
 
@@ -71,14 +72,14 @@ public class QuestionController {
         }
         List<JudgeCase> judgeCase = questionAddRequest.getJudgeCase();
         JudgeConfig judgeConfig = questionAddRequest.getJudgeConfig();
-        if (judgeCase != null){
+        if (judgeCase != null) {
             question.setJudgeCase(GSON.toJson(judgeCase));
         }
-        if(judgeConfig != null){
+        if (judgeConfig != null) {
             question.setJudgeConfig(GSON.toJson(judgeConfig));
         }
         questionService.validQuestion(question, true);
-        User loginUser = userService.getLoginUser(request);
+        User loginUser = userFeignClient.getLoginUser(request);
         question.setUserId(loginUser.getId());
         question.setFavourNum(0);
         question.setThumbNum(0);
@@ -100,13 +101,13 @@ public class QuestionController {
         if (deleteRequest == null || deleteRequest.getId() <= 0) {
             throw new BusinessException(ErrorCode.PARAMS_ERROR);
         }
-        User user = userService.getLoginUser(request);
+        User user = userFeignClient.getLoginUser(request);
         long id = deleteRequest.getId();
         // 判断是否存在
         Question oldQuestion = questionService.getById(id);
         ThrowUtils.throwIf(oldQuestion == null, ErrorCode.NOT_FOUND_ERROR);
         // 仅本人或管理员可删除
-        if (!oldQuestion.getUserId().equals(user.getId()) && !userService.isAdmin(request)) {
+        if (!oldQuestion.getUserId().equals(user.getId()) && !userFeignClient.isAdmin(user)) {
             throw new BusinessException(ErrorCode.NO_AUTH_ERROR);
         }
         boolean b = questionService.removeById(id);
@@ -133,10 +134,10 @@ public class QuestionController {
         }
         List<JudgeCase> judgeCase = questionUpdateRequest.getJudgeCase();
         JudgeConfig judgeConfig = questionUpdateRequest.getJudgeConfig();
-        if (judgeCase != null){
+        if (judgeCase != null) {
             question.setJudgeCase(GSON.toJson(judgeCase));
         }
-        if(judgeConfig != null){
+        if (judgeConfig != null) {
             question.setJudgeConfig(GSON.toJson(judgeConfig));
         }
         // 参数校验
@@ -176,13 +177,13 @@ public class QuestionController {
      */
     @PostMapping("/list/page/vo")
     public BaseResponse<Page<QuestionVO>> listQuestionVOByPage(@RequestBody QuestionQueryRequest questionQueryRequest,
-            HttpServletRequest request) {
+                                                               HttpServletRequest request) {
         long current = questionQueryRequest.getCurrent();
         long size = questionQueryRequest.getPageSize();
         // 限制爬虫
         ThrowUtils.throwIf(size > 20, ErrorCode.PARAMS_ERROR);
-        Page<Question> questionPage = questionService.page(new Page<>(current, size),
-                questionService.getQueryWrapper(questionQueryRequest));
+        QueryWrapper<Question> queryWrapper = questionService.getQueryWrapper(questionQueryRequest);
+        Page<Question> questionPage = questionService.page(new Page<>(current, size), queryWrapper);
         return ResultUtils.success(questionService.getQuestionVOPage(questionPage, request));
     }
 
@@ -195,11 +196,11 @@ public class QuestionController {
      */
     @PostMapping("/my/list/page/vo")
     public BaseResponse<Page<QuestionVO>> listMyQuestionVOByPage(@RequestBody QuestionQueryRequest questionQueryRequest,
-            HttpServletRequest request) {
+                                                                 HttpServletRequest request) {
         if (questionQueryRequest == null) {
             throw new BusinessException(ErrorCode.PARAMS_ERROR);
         }
-        User loginUser = userService.getLoginUser(request);
+        User loginUser = userFeignClient.getLoginUser(request);
         questionQueryRequest.setUserId(loginUser.getId());
         long current = questionQueryRequest.getCurrent();
         long size = questionQueryRequest.getPageSize();
@@ -232,21 +233,21 @@ public class QuestionController {
         }
         List<JudgeCase> judgeCase = questionEditRequest.getJudgeCase();
         JudgeConfig judgeConfig = questionEditRequest.getJudgeConfig();
-        if (judgeCase != null){
+        if (judgeCase != null) {
             question.setJudgeCase(GSON.toJson(judgeCase));
         }
-        if(judgeConfig != null){
+        if (judgeConfig != null) {
             question.setJudgeConfig(GSON.toJson(judgeConfig));
         }
         // 参数校验
         questionService.validQuestion(question, false);
-        User loginUser = userService.getLoginUser(request);
+        User loginUser = userFeignClient.getLoginUser(request);
         long id = questionEditRequest.getId();
         // 判断是否存在
         Question oldQuestion = questionService.getById(id);
         ThrowUtils.throwIf(oldQuestion == null, ErrorCode.NOT_FOUND_ERROR);
         // 仅本人或管理员可编辑
-        if (!oldQuestion.getUserId().equals(loginUser.getId()) && !userService.isAdmin(loginUser)) {
+        if (!oldQuestion.getUserId().equals(loginUser.getId()) && !userFeignClient.isAdmin(loginUser)) {
             throw new BusinessException(ErrorCode.NO_AUTH_ERROR);
         }
         boolean result = questionService.updateById(question);
@@ -263,15 +264,13 @@ public class QuestionController {
     @PostMapping("/list/page")
     @AuthCheck(mustRole = UserConstant.ADMIN_ROLE)
     public BaseResponse<Page<Question>> listQuestionByPage(@RequestBody QuestionQueryRequest questionQueryRequest,
-                                                   HttpServletRequest request) {
+                                                           HttpServletRequest request) {
         long current = questionQueryRequest.getCurrent();
         long size = questionQueryRequest.getPageSize();
         Page<Question> questionPage = questionService.page(new Page<>(current, size),
                 questionService.getQueryWrapper(questionQueryRequest));
         return ResultUtils.success(questionPage);
     }
-
-
 
 
     /**
@@ -288,7 +287,7 @@ public class QuestionController {
             throw new BusinessException(ErrorCode.PARAMS_ERROR);
         }
         // 登录才能提交
-        final User loginUser = userService.getLoginUser(request);
+        final User loginUser = userFeignClient.getLoginUser(request);
         long result = questionSubmitService.doQuestionSubmit(questionSubmitAddRequest, loginUser);
         return ResultUtils.success(result);
     }
@@ -310,7 +309,7 @@ public class QuestionController {
         Page<QuestionSubmit> questionPage = questionSubmitService.page(new Page<>(current, size),
                 questionSubmitService.getQueryWrapper(questionSubmitQueryRequest));
         // 脱敏
-        User loginUser = userService.getLoginUser(request);
+        User loginUser = userFeignClient.getLoginUser(request);
         Page<QuestionSubmitVO> questionVOPage = questionSubmitService.getQuestionSubmitVOPage(questionPage, loginUser);
         return ResultUtils.success(questionVOPage);
     }
