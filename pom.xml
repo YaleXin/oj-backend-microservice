@@ -16,6 +16,7 @@
         <module>oj-backend-question-service</module>
         <module>oj-backend-service-client</module>
         <module>oj-backend-user-service</module>
+        <module>oj-backend-code-sandbox</module>
     </modules>
     <name>oj-backend-microservice</name>
     <description>oj微服务</description>

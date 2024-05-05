@@ -1,0 +1,92 @@
+# 代码沙箱配置
+code-sandbox:
+  sandbox-list:
+    - name: java
+      image: openjdk:8-alpine
+      compile: "javac -encoding utf-8"
+      run: "java -Xmx256m -Dfile.encoding=UTF-8 -cp /app/ Main"
+    - name: C
+        image: gcc:6.3.0
+        compile: "gcc Main.c -o Main"
+        run: "Main"
+    - name: C++
+        image: gcc:6.3.0
+        compile: compile-cmd
+        run: run-cmd
+
+
+# 公共配置文件
+# @author Yalexin
+#
+spring:
+  application:
+    name: oj-backend-code-sandbox
+  # 默认 dev 环境
+  profiles:
+    active: dev
+  # 支持 swagger3
+  mvc:
+    pathmatch:
+      matching-strategy: ant_path_matcher
+  # session 配置
+  session:
+    store-type: redis
+    # 30 天过期
+    timeout: 2592000
+  # 数据库配置
+  # todo 需替换配置
+  datasource:
+    driver-class-name: com.mysql.cj.jdbc.Driver
+    url: jdbc:mysql://localhost:3307/oj_db
+    username: root
+    password: 123456
+
+
+  # Elasticsearch 配置
+  # todo 需替换配置，然后取消注释
+  #  elasticsearch:
+  #    uris: http://localhost:9200
+  #    username: root
+  #    password: 123456
+  # 文件上传
+  servlet:
+    multipart:
+      # 大小限制
+      max-file-size: 10MB
+
+  cloud:
+    nacos:
+      discovery:
+        server-addr: 127.0.0.1:8848
+
+server:
+  address: 0.0.0.0
+  port: 8105
+  servlet:
+    context-path: /api/sandbox
+    # cookie 30 天过期
+    session:
+      cookie:
+        max-age: 2592000
+        path: /api
+mybatis-plus:
+  configuration:
+    map-underscore-to-camel-case: false
+    log-impl: org.apache.ibatis.logging.stdout.StdOutImpl
+  global-config:
+    db-config:
+      logic-delete-field: isDelete # 全局逻辑删除的实体字段名
+      logic-delete-value: 1 # 逻辑已删除值（默认为 1）
+      logic-not-delete-value: 0 # 逻辑未删除值（默认为 0）
+
+
+# slf4j日志配置
+logging:
+  # 配置级别
+  level:
+    root: info
+    #分包配置级别，即不同的目录下可以使用不同的级别
+    top.yalexin.top.yalexin.ojbackenduserservice: debug
+
+knife4j:
+  enable: true
