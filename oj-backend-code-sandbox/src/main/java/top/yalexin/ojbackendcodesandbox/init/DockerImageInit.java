@@ -17,6 +17,7 @@ import org.springframework.stereotype.Component;
 import top.yalexin.ojbackendcodesandbox.model.SandboxEntry;
 
 
+import javax.annotation.Resource;
 import java.util.*;
 import java.util.stream.Collectors;
 
@@ -29,17 +30,15 @@ public class DockerImageInit implements CommandLineRunner {
     @Autowired
     private SandboxEntry sandboxEntry;
 
+    // 自动根据 DockerConfig.getDockerInstance() 获取实例
+    @Resource
+    private DockerClient dockerClient;
+
     @Override
     public void run(String... args) throws Exception {
         List<SandboxEntry.DockerInfo> sandboxList = sandboxEntry.getSandboxList();
         log.info("sandbox = {}", sandboxList);
-        DockerClient dockerClient = DockerClientBuilder.getInstance("tcp://172.22.108.1:2375").build();
         List<Image> images = dockerClient.listImagesCmd().exec();
-
-        String[] repoTags = images.get(4).getRepoTags();
-        List<String> collect = Arrays.stream(repoTags).map(String::toString).collect(Collectors.toList());
-
-
 
         List<String[]> imageListArray = images.stream().map(Image::getRepoTags).collect(Collectors.toList());
 

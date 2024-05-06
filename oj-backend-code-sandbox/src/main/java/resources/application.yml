@@ -1,18 +1,20 @@
 # 代码沙箱配置
 code-sandbox:
+  host: 172.22.108.1
+  port: 2375
   sandbox-list:
     - name: java
       image: openjdk:8-alpine
       compile: "javac -encoding utf-8"
       run: "java -Xmx256m -Dfile.encoding=UTF-8 -cp /app/ Main"
     - name: C
-        image: gcc:6.3.0
-        compile: "gcc Main.c -o Main"
-        run: "Main"
+      image: gcc:6.3.0
+      compile: "gcc Main.c -o Main"
+      run: "Main"
     - name: C++
-        image: gcc:6.3.0
-        compile: compile-cmd
-        run: run-cmd
+      image: gcc:6.3.0
+      compile: compile-cmd
+      run: run-cmd
 
 
 # 公共配置文件

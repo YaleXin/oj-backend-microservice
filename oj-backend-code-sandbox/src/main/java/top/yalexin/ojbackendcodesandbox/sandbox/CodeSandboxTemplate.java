@@ -10,11 +10,12 @@ import java.nio.charset.StandardCharsets;
 import java.util.List;
 import java.util.UUID;
 
-public abstract class CodeSandboxTemplate {
+public abstract class CodeSandboxTemplate implements CodeSandbox{
 
     private static final String GLOBAL_CODE_DIR = "tmpCode";
     private static final String GLOBAL_CODE_FILE_NAME = "Main";
 
+    @Override
     public ExecuteCodeResponse executeCode(ExecuteCodeRequest executeCodeRequest) {
         String code = executeCodeRequest.getCode();
         String language = executeCodeRequest.getLanguage();
