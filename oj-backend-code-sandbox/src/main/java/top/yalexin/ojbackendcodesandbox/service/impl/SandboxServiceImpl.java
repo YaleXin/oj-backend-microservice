@@ -19,15 +19,18 @@ public class SandboxServiceImpl implements SandboxService {
     @Autowired
     private SandboxEntry sandboxEntry;
 
+    @Autowired
+    private DockerCodeSandboxTemplate dockerCodeSandboxTemplate;
+
     @Override
     public ExecuteCodeResponse executeCode(ExecuteCodeRequest executeCodeRequest) {
         String language = executeCodeRequest.getLanguage();
         CodeSandbox codeSandbox;
         // 根据编程语言初始化代码沙箱
         if("java".equals(language)){
-            codeSandbox = new DockerCodeSandboxTemplate();
+            codeSandbox = dockerCodeSandboxTemplate;
         } else{
-            codeSandbox = new DockerCodeSandboxTemplate();
+            codeSandbox = dockerCodeSandboxTemplate;
         }
         return codeSandbox.executeCode(executeCodeRequest);
     }

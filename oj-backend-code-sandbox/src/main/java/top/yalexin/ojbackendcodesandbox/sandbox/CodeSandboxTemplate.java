@@ -26,7 +26,7 @@ public abstract class CodeSandboxTemplate implements CodeSandbox{
         String userCodeParentPath = userCodeFile.getParentFile().getPath();
 
         // 编译代码并执行代码
-        List<ExecuteMessage> executeMessageArrayList = compileAndRun(userCodeFile, inputList);
+        List<ExecuteMessage> executeMessageArrayList = compileAndRun(language, userCodeFile, inputList);
 
         // 整理输出信息
         ExecuteCodeResponse outputResponse = getOutputResponse(executeMessageArrayList);
@@ -36,7 +36,14 @@ public abstract class CodeSandboxTemplate implements CodeSandbox{
         return outputResponse;
     }
 
-    abstract List<ExecuteMessage> compileAndRun(File userCodeFile, List<String> inputList);
+    /**
+     * 需要各个子类实现
+     * @param language
+     * @param userCodeFile
+     * @param inputList
+     * @return
+     */
+    abstract List<ExecuteMessage> compileAndRun(String language, File userCodeFile, List<String> inputList);
 
     public ExecuteCodeResponse getOutputResponse(List<ExecuteMessage> executeMessageArrayList) {
         ExecuteCodeResponse executeCodeResponse = new ExecuteCodeResponse();
