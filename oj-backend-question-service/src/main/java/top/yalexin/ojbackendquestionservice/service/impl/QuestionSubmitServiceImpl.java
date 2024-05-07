@@ -30,6 +30,7 @@ import top.yalexin.ojbackendserviceclient.service.UserFeignClient;
 
 import javax.annotation.Resource;
 import java.util.List;
+import java.util.concurrent.CompletableFuture;
 import java.util.stream.Collectors;
 
 /**
@@ -91,13 +92,13 @@ public class QuestionSubmitServiceImpl extends ServiceImpl<QuestionSubmitMapper,
         }
         Long submitId = questionSubmit.getId();
 
-        // 写入消息队列
-        myRabbitMqMessageProducer.sendMessage(String.valueOf(submitId));
+        // TODO 写入消息队列
+//        myRabbitMqMessageProducer.sendMessage(String.valueOf(submitId));
 
-        //  调用判题服务（异步）
-//        CompletableFuture.runAsync(() ->{
-//            judgeFeignClient.doJudge(submitId);
-//        });
+//          调用判题服务（异步）
+        CompletableFuture.runAsync(() ->{
+            judgeFeignClient.doJudge(submitId);
+        });
 
         return submitId;
     }
