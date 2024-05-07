@@ -81,4 +81,21 @@ class OjBackendCodeSandboxApplicationTests {
         ExecuteCodeResponse executeCodeResponse = sandboxService.executeCode(executeCodeRequest);
         System.out.println("executeCodeResponse = " + executeCodeResponse);
     }
+
+    @Test
+    void testPythonCode() {
+//        SandboxEntry.DockerInfo java = sandboxEntry.getDockerInfoByName("java");
+//        System.out.println("java = " + java);
+        FileReader fileReader = new FileReader("C:\\Users\\Yalexin\\IdeaProjects\\oj-backend-microservice\\oj-backend-code-sandbox\\src\\test\\java\\top\\yalexin\\ojbackendcodesandbox\\Main.py");
+        String result = fileReader.readString();
+
+
+        ExecuteCodeRequest executeCodeRequest = new ExecuteCodeRequest();
+        List<String> input = Arrays.asList("134 12", "1414 8");
+        executeCodeRequest.setCode(result);
+        executeCodeRequest.setInputList(input);
+        executeCodeRequest.setLanguage("python");
+        ExecuteCodeResponse executeCodeResponse = sandboxService.executeCode(executeCodeRequest);
+        System.out.println("executeCodeResponse = " + executeCodeResponse);
+    }
 }

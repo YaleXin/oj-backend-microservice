@@ -18,7 +18,11 @@ code-sandbox:
       image: gcc:6.3.0
       compile: "g++ Main.cpp -o Main"
       run: "./Main"
-
+    - name: python
+      filename: Main.py
+      image: python:3.9
+      compile: " "
+      run: "python Main.py"
 
 # 公共配置文件
 # @author Yalexin
