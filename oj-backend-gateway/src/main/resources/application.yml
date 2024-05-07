@@ -23,6 +23,11 @@ spring:
           uri: lb://oj-backend-judge-service
           predicates:
             - Path=/api/judge/**
+
+        - id: oj-backend-code-sandbox
+          uri: lb://oj-backend-code-sandbox
+          predicates:
+            - Path=/api/sandbox/**
   main:
     # 网关配置选项
     web-application-type: reactive

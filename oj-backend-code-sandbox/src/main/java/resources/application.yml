@@ -3,7 +3,7 @@ code-sandbox:
   host: 172.22.108.1
   port: 2375
   sandbox-list:
-    - name: java
+    - name: Java
       filename: Main.java
       image: openjdk:8-alpine
       compile: "javac Main.java -encoding utf-8"
@@ -18,7 +18,7 @@ code-sandbox:
       image: gcc:6.3.0
       compile: "g++ Main.cpp -o Main"
       run: "./Main"
-    - name: python
+    - name: Python
       filename: Main.py
       image: python:3.9
       compile: " "
