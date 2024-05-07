@@ -47,4 +47,38 @@ class OjBackendCodeSandboxApplicationTests {
         System.out.println("executeCodeResponse = " + executeCodeResponse);
     }
 
+
+    @Test
+    void testCCode() {
+//        SandboxEntry.DockerInfo java = sandboxEntry.getDockerInfoByName("java");
+//        System.out.println("java = " + java);
+        FileReader fileReader = new FileReader("C:\\Users\\Yalexin\\IdeaProjects\\oj-backend-microservice\\oj-backend-code-sandbox\\src\\test\\java\\top\\yalexin\\ojbackendcodesandbox\\Main.c");
+        String result = fileReader.readString();
+
+
+        ExecuteCodeRequest executeCodeRequest = new ExecuteCodeRequest();
+        List<String> input = Arrays.asList("1 12", "14 8");
+        executeCodeRequest.setCode(result);
+        executeCodeRequest.setInputList(input);
+        executeCodeRequest.setLanguage("C");
+        ExecuteCodeResponse executeCodeResponse = sandboxService.executeCode(executeCodeRequest);
+        System.out.println("executeCodeResponse = " + executeCodeResponse);
+    }
+
+    @Test
+    void testCPlusCode() {
+//        SandboxEntry.DockerInfo java = sandboxEntry.getDockerInfoByName("java");
+//        System.out.println("java = " + java);
+        FileReader fileReader = new FileReader("C:\\Users\\Yalexin\\IdeaProjects\\oj-backend-microservice\\oj-backend-code-sandbox\\src\\test\\java\\top\\yalexin\\ojbackendcodesandbox\\Main.c");
+        String result = fileReader.readString();
+
+
+        ExecuteCodeRequest executeCodeRequest = new ExecuteCodeRequest();
+        List<String> input = Arrays.asList("111 12", "114 8");
+        executeCodeRequest.setCode(result);
+        executeCodeRequest.setInputList(input);
+        executeCodeRequest.setLanguage("C++");
+        ExecuteCodeResponse executeCodeResponse = sandboxService.executeCode(executeCodeRequest);
+        System.out.println("executeCodeResponse = " + executeCodeResponse);
+    }
 }

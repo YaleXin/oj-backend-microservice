@@ -12,12 +12,12 @@ code-sandbox:
       filename: Main.c
       image: gcc:6.3.0
       compile: "gcc Main.c -o Main"
-      run: "Main"
+      run: "./Main"
     - name: C++
       filename: Main.cpp
       image: gcc:6.3.0
-      compile: compile-cmd
-      run: run-cmd
+      compile: "g++ Main.cpp -o Main"
+      run: "./Main"
 
 
 # 公共配置文件

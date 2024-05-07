@@ -24,15 +24,7 @@ public class SandboxServiceImpl implements SandboxService {
 
     @Override
     public ExecuteCodeResponse executeCode(ExecuteCodeRequest executeCodeRequest) {
-        String language = executeCodeRequest.getLanguage();
-        CodeSandbox codeSandbox;
-        // 根据编程语言初始化代码沙箱
-        if("java".equals(language)){
-            codeSandbox = dockerCodeSandboxTemplate;
-        } else{
-            codeSandbox = dockerCodeSandboxTemplate;
-        }
-        return codeSandbox.executeCode(executeCodeRequest);
+        return dockerCodeSandboxTemplate.executeCode(executeCodeRequest);
     }
 
     @Override

@@ -50,7 +50,16 @@ public class DockerCodeSandboxTemplate extends CodeSandboxTemplate {
         // 创建指定编程语言的容器
         String containerId = createContainer(language, userCodeFile);
         // 编译代码（如果是解释性编程语言，则编译过程啥都不做，具体由配置文件配置该命令）
-        boolean compileStatus = compileCode(containerId, language);
+        ExecuteMessage compileExecuteMessage = compileCode(containerId, language);
+        // 编译失败
+        if(SandBoxStatusEnum.ERROR.getValue().equals(compileExecuteMessage.getExitCode())){
+            int size = inputList.size();
+            List<ExecuteMessage> executeMessageArrayList = new ArrayList<>();
+            for(int i = 1; i <= size;i++){
+                executeMessageArrayList.add(compileExecuteMessage);
+            }
+            return executeMessageArrayList;
+        }
         // 根据输入用例执行代码
         List<ExecuteMessage> executeMessages = runCode(containerId, language, inputList);
 
@@ -125,14 +134,11 @@ public class DockerCodeSandboxTemplate extends CodeSandboxTemplate {
      * @param language
      * @return 编译成功与否
      */
-    private boolean compileCode(String containerId, String language) {
+    private ExecuteMessage compileCode(String containerId, String language) {
         SandboxEntry.DockerInfo dockerInfoByName = sandboxEntry.getDockerInfoByName(language);
         String compileCmd = dockerInfoByName.getCompile();
         ExecuteMessage executeMessage = runCmdWithDocker(containerId, compileCmd);
-        if (SandBoxStatusEnum.ERROR.getValue().equals(executeMessage.getExitCode())){
-            return false;
-        }
-        return true;
+        return executeMessage;
     }
 
     private List<ExecuteMessage> runCode(String containerId, String language, List<String> inputList) {
