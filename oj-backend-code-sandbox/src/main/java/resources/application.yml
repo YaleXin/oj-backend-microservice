@@ -2,6 +2,7 @@
 code-sandbox:
   host: 172.22.108.1
   port: 2375
+  max-connections: 1000
   sandbox-list:
     - name: Java
       filename: Main.java
@@ -21,7 +22,7 @@ code-sandbox:
     - name: Python
       filename: Main.py
       image: python:3.9
-      compile: " "
+      compile: "echo python"
       run: "python Main.py"
 
 # 公共配置文件

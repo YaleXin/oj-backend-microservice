@@ -7,6 +7,7 @@ import com.github.dockerjava.api.command.*;
 import com.github.dockerjava.api.model.*;
 import com.github.dockerjava.core.DockerClientBuilder;
 import com.github.dockerjava.core.command.ExecStartResultCallback;
+import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.context.annotation.Scope;
 import org.springframework.stereotype.Component;
@@ -21,14 +22,16 @@ import top.yalexin.ojbackendcodesandbox.model.SandboxEntry;
 import top.yalexin.ojbackendcodesandbox.utils.CodeSandBoxUtils;
 
 
-import java.io.Closeable;
-import java.io.File;
-import java.io.IOException;
+import java.io.*;
+import java.nio.charset.StandardCharsets;
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.List;
 import java.util.concurrent.TimeUnit;
+import java.util.stream.Collectors;
 
 @Component
+@Slf4j
 // 每个 session 创建一个实例
 //@Scope("session")
 public class DockerCodeSandboxTemplate extends CodeSandboxTemplate {
@@ -52,10 +55,11 @@ public class DockerCodeSandboxTemplate extends CodeSandboxTemplate {
         // 编译代码（如果是解释性编程语言，则编译过程啥都不做，具体由配置文件配置该命令）
         ExecuteMessage compileExecuteMessage = compileCode(containerId, language);
         // 编译失败
-        if(SandBoxStatusEnum.ERROR.getValue().equals(compileExecuteMessage.getExitCode())){
+        if (SandBoxStatusEnum.ERROR.getValue().equals(compileExecuteMessage.getExitCode())) {
+            log.error("compile failed!: {} ", compileExecuteMessage.getErrorMessage());
             int size = inputList.size();
             List<ExecuteMessage> executeMessageArrayList = new ArrayList<>();
-            for(int i = 1; i <= size;i++){
+            for (int i = 1; i <= size; i++) {
                 executeMessageArrayList.add(compileExecuteMessage);
             }
             return executeMessageArrayList;
@@ -64,7 +68,7 @@ public class DockerCodeSandboxTemplate extends CodeSandboxTemplate {
         List<ExecuteMessage> executeMessages = runCode(containerId, language, inputList);
 
         // 删除容器
-        if (containerId !=null){
+        if (containerId != null) {
             boolean destroyStatus = destroyContainer(containerId);
         }
 
@@ -137,7 +141,7 @@ public class DockerCodeSandboxTemplate extends CodeSandboxTemplate {
     private ExecuteMessage compileCode(String containerId, String language) {
         SandboxEntry.DockerInfo dockerInfoByName = sandboxEntry.getDockerInfoByName(language);
         String compileCmd = dockerInfoByName.getCompile();
-        ExecuteMessage executeMessage = runCmdWithDocker(containerId, compileCmd);
+        ExecuteMessage executeMessage = runCmdWithDocker(containerId, compileCmd, null);
         return executeMessage;
     }
 
@@ -147,8 +151,7 @@ public class DockerCodeSandboxTemplate extends CodeSandboxTemplate {
         String runCmd = dockerInfoByName.getRun();
         for (String inputStr :
                 inputList) {
-            String curRunCmd = String.format("echo \"%s\" | %s", inputStr, runCmd);
-            ExecuteMessage executeMessage = runCmdWithDocker(containerId, curRunCmd);
+            ExecuteMessage executeMessage = runCmdWithDocker(containerId, runCmd, inputStr);
             executeMessageArrayList.add(executeMessage);
         }
         return executeMessageArrayList;
@@ -159,18 +162,18 @@ public class DockerCodeSandboxTemplate extends CodeSandboxTemplate {
      *
      * @param containerId 容器id
      * @param cmd         要运行的命令
+     * @param inputStr    执行命令过程要传递的参数，如果是编译命令，该值一般为空，如果是运行程序，该值一般是输入用例
      * @return 执行结果
      */
-    private ExecuteMessage runCmdWithDocker(String containerId, String cmd) {
-        // 先创建 exec 命令
-        String[] userCodeCmd = {"sh", "-c", String.format("%s", cmd)};
+    private ExecuteMessage runCmdWithDocker(String containerId, String cmd, String inputStr) {
+        String[] cmdArray = cmd.split(" ");
         final boolean[] timeout = {true};
         ExecuteMessage executeMessage = new ExecuteMessage();
         ExecCreateCmdResponse execCreateCmdResponse = dockerClient.execCreateCmd(containerId)
                 .withAttachStdout(true)
                 .withAttachStderr(true)
                 .withAttachStdin(true)
-                .withCmd(userCodeCmd)
+                .withCmd(cmdArray)
                 .exec();
         // 执行 exec 命令
         try {
@@ -185,10 +188,20 @@ public class DockerCodeSandboxTemplate extends CodeSandboxTemplate {
             StopWatch stopWatch = new StopWatch();
             // 开启计时器
             stopWatch.start();
+            if (inputStr == null) {
+                dockerClient.execStartCmd(execCreateCmdResponse.getId())
+                        .exec(execStartResultCallback)
+                        .awaitCompletion(TIME_OUT, TimeUnit.MILLISECONDS); // 最多等待 TIME_OUT MILLISECONDS
+            } else {
+                // 转为输入流
+                byte[] inputBytes = inputStr.getBytes(StandardCharsets.UTF_8);
+                InputStream inputStream = new ByteArrayInputStream(inputBytes);
+                dockerClient.execStartCmd(execCreateCmdResponse.getId())
+                        .withStdIn(inputStream)
+                        .exec(execStartResultCallback)
+                        .awaitCompletion(TIME_OUT, TimeUnit.MILLISECONDS); // 最多等待 TIME_OUT MILLISECONDS
+            }
 
-            dockerClient.execStartCmd(execCreateCmdResponse.getId())
-                    .exec(execStartResultCallback)
-                    .awaitCompletion(TIME_OUT, TimeUnit.MILLISECONDS); // 最多等待 TIME_OUT MILLISECONDS
             // 关闭计时器
             stopWatch.stop();
             if (timeout[0]) {
@@ -207,11 +220,12 @@ public class DockerCodeSandboxTemplate extends CodeSandboxTemplate {
 
     /**
      * 销毁指定容器
+     *
      * @param containerId
      * @return
      */
-    private boolean destroyContainer(String containerId){
-        try{
+    private boolean destroyContainer(String containerId) {
+        try {
             // 停止容器
             StopContainerCmd stopContainerCmd = dockerClient.stopContainerCmd(containerId);
             stopContainerCmd.exec();
@@ -219,7 +233,7 @@ public class DockerCodeSandboxTemplate extends CodeSandboxTemplate {
             RemoveContainerCmd removeContainerCmd = dockerClient.removeContainerCmd(containerId);
             removeContainerCmd.exec();
             return true;
-        } catch (Exception e){
+        } catch (Exception e) {
             e.printStackTrace();
             return false;
         }
@@ -270,7 +284,7 @@ class MyExecStartResultCallback extends ExecStartResultCallback {
     private boolean[] timeout;
     private ExecuteMessage executeMessage;
 
-    MyExecStartResultCallback(boolean[] timeout, ExecuteMessage executeMessage){
+    MyExecStartResultCallback(boolean[] timeout, ExecuteMessage executeMessage) {
         this.timeout = timeout;
         this.executeMessage = executeMessage;
     }
