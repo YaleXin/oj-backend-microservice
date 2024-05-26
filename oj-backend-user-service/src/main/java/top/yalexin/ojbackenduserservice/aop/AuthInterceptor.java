@@ -37,6 +37,7 @@ public class AuthInterceptor {
      */
     @Around("@annotation(authCheck)")
     public Object doInterceptor(ProceedingJoinPoint joinPoint, AuthCheck authCheck) throws Throwable {
+        // 注解中注明需要的权限
         String mustRole = authCheck.mustRole();
         RequestAttributes requestAttributes = RequestContextHolder.currentRequestAttributes();
         HttpServletRequest request = ((ServletRequestAttributes) requestAttributes).getRequest();
@@ -49,15 +50,21 @@ public class AuthInterceptor {
                 throw new BusinessException(ErrorCode.NO_AUTH_ERROR);
             }
             String userRole = loginUser.getUserRole();
+            // 当前用户的权限
+            UserRoleEnum curUserRole = UserRoleEnum.getEnumByValue(userRole);
             // 如果被封号，直接拒绝
-            if (UserRoleEnum.BAN.equals(mustUserRoleEnum)) {
-                throw new BusinessException(ErrorCode.NO_AUTH_ERROR);
+            if (UserRoleEnum.BAN.equals(curUserRole)) {
+                throw new BusinessException(ErrorCode.BAN_ERROR);
             }
-            // 必须有管理员权限
+            // 必须有管理员权限（特殊情况）
             if (UserRoleEnum.ADMIN.equals(mustUserRoleEnum)) {
                 if (!mustRole.equals(userRole)) {
                     throw new BusinessException(ErrorCode.NO_AUTH_ERROR);
                 }
+            }
+            // 其他情况下，根据权限等级判断
+            if (mustUserRoleEnum.getLevel() > curUserRole.getLevel()) {
+                throw new BusinessException(ErrorCode.LACK_AUTH_ERROR);
             }
         }
         // 通过权限校验，放行

@@ -11,17 +11,21 @@ import java.util.stream.Collectors;
  */
 public enum UserRoleEnum {
 
-    USER("用户", "user"),
-    ADMIN("管理员", "admin"),
-    BAN("被封号", "ban");
+    USER("用户", "user", 100),
+    ADMIN("管理员", "admin", 200),
+    BAN("被封号", "ban", -1);
 
     private final String text;
 
     private final String value;
 
-    UserRoleEnum(String text, String value) {
+    // 权限等级，值越大，等级越高，拥有的权限越大
+    private final Integer level;
+
+    UserRoleEnum(String text, String value, Integer level) {
         this.text = text;
         this.value = value;
+        this.level = level;
     }
 
     /**
@@ -57,5 +61,9 @@ public enum UserRoleEnum {
 
     public String getText() {
         return text;
+    }
+
+    public Integer getLevel(){
+        return level;
     }
 }

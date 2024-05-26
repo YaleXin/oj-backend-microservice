@@ -301,6 +301,7 @@ public class QuestionController {
      * @return resultNum
      */
     @PostMapping("/question_submit/do")
+    @AuthCheck(mustRole = UserConstant.DEFAULT_ROLE)
     public BaseResponse<Long> doQuestionSubmit(@RequestBody QuestionSubmitAddRequest questionSubmitAddRequest,
                                                HttpServletRequest request) {
         if (questionSubmitAddRequest == null || questionSubmitAddRequest.getQuestionId() <= 0) {
